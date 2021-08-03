@@ -11,7 +11,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from tqdm import tqdm
 np.random.seed(5)
 import sys
-sys.path.insert(0, 'D:/Dossier_These_code_and_datas/LDA_all/function_LDA_package')
+sys.path.insert(0, '~/LDA_Project/function_LDA_package')
 from function_used_in_LDA_method import continuous_data_files_concat_kmeans_reattached_V2,continuous_data_files_concat_kmeans_reattached,LDA_function, generate_data, storage_position, relabeling, relabeling_hedi_style_V2, labeling_datas_Kmeans_KNN,LDA_function_makeblop_form, Generate_patient_with_make_blobs
 
 

@@ -13,6 +13,7 @@ from sklearn.cluster import KMeans
 from collections import Counter
 import time
 from sklearn.datasets import make_blobs
+np.random.seed(5)
 
 
 
@@ -78,9 +79,9 @@ def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of
 
         if first_step == 0:
             for number in range(number_of_dimension):
-                value = 0.1
-                globals()[f"cluster_std_{number}"] = random.randint(0, 100)
-                value +=  0.1
+                #value = 0.1
+                globals()[f"cluster_std_{number}"] = random.uniform(0, 1)
+                #value +=  0.1
             for number in range(number_of_dimension):
                 advance = 42
                 globals()[f"random_state{number}"] =  advance

@@ -93,7 +93,7 @@ for dimension in dimension_to_test:
 
 
     #Ping job done
-    webhook = DiscordWebhook(url = 'https://discord.com/api/webhooks/872804807050670171/ErNtnHtukjxO4gePB0F5fF7V2EWH_9nQZZdAFsdXUvqx6ZJH3orq8Gt-NOpfI9DAZo2S',content=f"@here \n\
+    webhook = DiscordWebhook(url = '',content=f"@here \n\
         **Your File: **{os.path.basename(__file__)} \n\
         **Execution:** succes :white_check_mark: for {dimension}\n\
         **Duration Time:** {timedelta(seconds = time.monotonic()-start_time)}"  )

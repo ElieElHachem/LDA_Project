@@ -29,10 +29,10 @@ figures_storage ,frame_storage = 'Figures_LDA_on_binary_data_generated' , 'Data_
 path_to_store_figures,path_to_store_frame = storage_position(patient_frame_to_store,figures_storage ,frame_storage, abspath =  os.path.abspath(__file__) )
 
 #Generate patients characteristics
-number_of_patient = 100
+number_of_patient = 1000
 number_of_cell = 10000
 
-dimension_to_test = [2]#,3,4,5] #number of dimension
+dimension_to_test = [2,3,4,5] #number of dimension
 for dimension in dimension_to_test:
 
     vectors_of_probability = number_of_phenotypes_to_test_with_vector(dimension)

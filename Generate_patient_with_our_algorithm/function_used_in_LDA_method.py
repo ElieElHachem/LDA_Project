@@ -12,7 +12,9 @@ from scipy.spatial import cKDTree as KDTree
 from sklearn.cluster import KMeans
 from collections import Counter
 import time
+import itertools
 from sklearn.datasets import make_blobs
+
 np.random.seed(5)
 
 
@@ -61,6 +63,18 @@ def generate_data(number_of_cell_to_generate, proba_tupple):
     return list_of_iteration
 
 
+def number_of_phenotypes_to_test_with_vector(dimension):
+    list_vecteur = np.linspace(0.1,1,10)
+    list_of_vector_of_probability = []
+    for element in itertools.product(np.round(list_vecteur,3), repeat = dimension):
+        if round(sum(element),3) == 1:
+            list_of_vector_of_probability.append(element)
+    list_of_vector_of_probability = [list(ele) for ele in list_of_vector_of_probability]
+
+    print(f'Number of possible phenotype combination for {dimension} dimension is {len(list_of_vector_of_probability)} phenotypes')
+    return list_of_vector_of_probability
+
+
 def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of_probability, patient_frame_to_store, return_combination):
     for i,x in enumerate(vectors_of_probability):
         globals()[f"vector_of_probability_{i}"] = x
@@ -69,7 +83,7 @@ def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of
     list_of_array_patients = np.split(range(number_of_patient), splitted_vector)[:-1]
 
 
-    patient_and_phenotype = {'Patient_Number':[] ,'Phenotype_Number':[]}
+    patient_and_phenotype = {'Patient_Number':[] ,'Phenotype_Number':[], 'Patient_combination_phenotype':[]}
     first_step = 0
 
 
@@ -85,7 +99,7 @@ def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of
             for number in range(number_of_dimension):
                 advance = 42
                 globals()[f"random_state{number}"] =  advance
-                advance += 10
+                advance += random.uniform(1, 15)
             first_step += 1
 
         for patient in tqdm(list_patient):
@@ -97,6 +111,7 @@ def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of
             #Patient Phenotype
             patient_and_phenotype['Patient_Number'].append(f'patient_N°{str(patient).zfill(3)}')
             patient_and_phenotype['Phenotype_Number'].append(group_patient_phenotype+1)
+            patient_and_phenotype['Patient_combination_phenotype'].append(vector_of_probability)
 
             #First define random state and dimentionality
             # for number in range(number_of_dimension):
@@ -121,8 +136,10 @@ def Generate_patient_with_make_blobs(number_of_patient,number_of_cell,vectors_of
 
             phenotype_continuous_data_patient.to_csv(patient_frame_to_store +f'/Generated_file_for_patient_N°{str(patient).zfill(3)}.csv')
             phenotype_binary_data_patient.to_csv(patient_frame_to_store + f'/Generated_binary_file_for_patient_N°{str(patient).zfill(3)}.csv')
+            
 
     pd.DataFrame(patient_and_phenotype).to_csv(patient_frame_to_store + f'/Patient_number_and_phenotype_code.csv')
+
 
     if return_combination == True:
         return patient_and_phenotype
@@ -300,7 +317,7 @@ def LDA_function_makeblop_form(dataframe_for_LDA,diviser_of_matrix,runrun,number
         norm_theta[i, :] /= ns[i]
     #print(np.max(norm_theta))
 
-    return norm_theta
+    return np.round(norm_theta)
 
 
 def relabeling(number_of_patient_phenotypes,frame_binary_with_threshold ):
@@ -482,8 +499,7 @@ def continuous_data_files_concat_kmeans_reattached_V2(path_to_store_frame, numbe
         df_to_generate = pd.read_csv(file, index_col= 0)
         list_of_frame_to_append.append(df_to_generate)
     overall_dataframe = pd.concat(list_of_frame_to_append, ignore_index=False)
-    overall_dataframe = pd.DataFrame(stats.zscore(overall_dataframe, nan_policy='omit'))
-
+    overall_dataframe = pd.DataFrame(stats.zscore(overall_dataframe, nan_policy= 'omit'))
 
     kmeans = KMeans(n_clusters=number_of_cluster, random_state=41).fit(overall_dataframe)
     labels = kmeans.labels_

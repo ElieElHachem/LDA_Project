@@ -35,30 +35,31 @@ figures_storage ,frame_storage = 'Figures_LDA_on_binary_data_generated' , 'Data_
 path_to_store_figures,path_to_store_frame = storage_position(patient_frame_to_store,figures_storage ,frame_storage, abspath =  os.path.abspath(__file__) )
 
 #Generate patients characteristics
-number_of_patient = 100
-number_of_cell = 10000
-
 
 compiled_information = {'Dimension':[] ,'Number of Phenotypes':[],'Vectors of probability':[],'Std value': [],'Accuracy':[]}
 
-number_of_run = 5
-test_std = [2,1,0.5]
+number_of_patient = 100
+number_of_cell = 10000
+number_of_run = 2
+test_std = [2,1]
+dimension_to_test = [3] #number of dimension
 
-for value in tqdm(test_std): 
+value_in_middle = 0.15
+random_subset = 1
+number_of_class = 4
 
-    n_pheno = 2
-    dimension_to_test = [3] #number of dimension
-    theta = 10
+n_pheno = 2
+theta = 10
 
-    value_in_middle = 0.15
-    proba_to_test = test_extreme_porba_subseted(3,value_in_middle,4,3)
 
-    for i in tqdm(range(number_of_run)):
+for dim in tqdm(dimension_to_test):
+    proba_to_test = test_extreme_porba_subseted(dim,value_in_middle,number_of_class,random_subset)
 
-        for proba in proba_to_test:
-            for dimension in dimension_to_test:
+    for value in tqdm(test_std): 
+        for i in tqdm(range(number_of_run)):
+            for proba in proba_to_test:
                 compiled_information['Std value'].append(value)
-                compiled_information['Dimension'].append(dimension)
+                compiled_information['Dimension'].append(dim)
                 compiled_information['Number of Phenotypes'].append(n_pheno)
 
                 #Clustering possibility
@@ -70,7 +71,7 @@ for value in tqdm(test_std):
                 cutting_tree = 1
 
                 #Lets Generate Patients and store them
-                phenotype_code , phenotype_combination = test_blob_left_right_proba(proba=proba,number_of_patient = number_of_patient,n_pheno = n_pheno,n_dim=dimension,theta = theta,number_of_cell= number_of_cell, patient_frame_to_store=patient_frame_to_store, value=value, return_combination = True)
+                phenotype_code , phenotype_combination = test_blob_left_right_proba(proba=proba,number_of_patient = number_of_patient,n_pheno = n_pheno,n_dim=dim,theta = theta,number_of_cell= number_of_cell, patient_frame_to_store=patient_frame_to_store, value=value, return_combination = True)
                 phenotype_code_frame = pd.DataFrame(phenotype_code)
 
                 compiled_information['Vectors of probability'].append(phenotype_combination)
@@ -120,50 +121,56 @@ for value in tqdm(test_std):
 
                 compiled_information['Accuracy'].append(calc_of_accuracy)
 
+            dataframe_compiled = pd.DataFrame(compiled_information)
+            dataframe_compiled.to_csv(path_to_store_frame + f'/Compiled_information_for_{np.max(dimension_to_test)}_dim_tested_multiple_dim.csv')
+
+
+
+
+
         dataframe_compiled = pd.DataFrame(compiled_information)
-        dataframe_compiled.to_csv(path_to_store_frame + f'/Compiled_information_for_{np.max(dimension_to_test)}_dim_tested_multiple_dim.csv')
+        euc_dist_list = []
+        for i in dataframe_compiled['Vectors of probability']:
+            euc_dist = euclidean(*i)
+            euc_dist_list.append(euc_dist)
+
+        dataframe_compiled['Euclidean Distance'] = euc_dist_list
+        dataframe_compiled.to_csv(path_to_store_frame + f'/Compiled_information_for_{np.max(dimension_to_test)}_dim_tested_multiple_dim_with_eclidean_dist.csv')
+
+        dataframe_compiled["Std value selected"] = 'std ='+ dataframe_compiled["Std value"].astype(str)
+
+        accplot = ggplot(dataframe_compiled, aes(x='Euclidean Distance', y='Accuracy')) +\
+            geom_line(aes(color = 'Std value selected')) +\
+            geom_point() +\
+            ggtitle(f'Accuracy for {dim} dimension and multiple phenotypes selected {value} std')
+        ggsave(accplot,path_to_store_figures + f'/Accuracy for different {dim} dim  and extreme phenotypes selected and {value} std.png' , dpi = 500)
 
 
+        webhook = DiscordWebhook(content=f"@here \n\
+            **Your File: **{os.path.basename(__file__)} finish to execute for {value} std \n\
+            **Duration Time:** {timedelta(seconds = time.monotonic()-start_time)} \n\
+            **Processing next value:** :robot: ")
+        webhook.execute()
 
 
+    df_for_average = dataframe_compiled.groupby(['Euclidean Distance','Std value']).mean().reset_index()
+    df_for_average['Accuracy_std'] = dataframe_compiled.groupby(['Euclidean Distance','Std value']).sem(ddof=1).reset_index()['Accuracy']
+    df_for_average["Std value selected"] = 'std ='+ df_for_average["Std value"].astype(str)
 
-    dataframe_compiled = pd.DataFrame(compiled_information)
-    euc_dist_list = []
-    for i in dataframe_compiled['Vectors of probability']:
-        euc_dist = euclidean(*i)
-        euc_dist_list.append(euc_dist)
-
-    dataframe_compiled['Euclidean Distance'] = euc_dist_list
-    dataframe_compiled.to_csv(path_to_store_frame + f'/Compiled_information_for_{np.max(dimension_to_test)}_dim_tested_multiple_dim_with_eclidean_dist.csv')
-
-    dataframe_compiled["Std value selected"] = 'std ='+ dataframe_compiled["Std value"].astype(str)
-
-    accplot = ggplot(dataframe_compiled, aes(x='Euclidean Distance', y='Accuracy')) +\
+    plot_average = ggplot(df_for_average, aes(x='Euclidean Distance', y='Accuracy')) +\
         geom_line(aes(color = 'Std value selected')) +\
         geom_point() +\
-        ggtitle(f'Accuracy for {dimension} dimension and multiple phenotypes selected {value} std')
-    ggsave(accplot,path_to_store_figures + f'/Accuracy for different {dimension} dim  and extreme phenotypes selected and {value} std.png' , dpi = 500)
+        geom_errorbar(aes(ymin = df_for_average['Accuracy'] - df_for_average['Accuracy_std'] , ymax =  df_for_average['Accuracy'] + df_for_average['Accuracy_std'], color = 'Std value selected'), position = position_dodge(0), width = 0.044) +\
+        ggtitle("Accuracy plot for multiple Euclidean Distance and different std values")
+    ggsave(plot_average,path_to_store_figures + f'/Mean_Accuracy_plot_for_multiple_different std {dim} dim png' , dpi = 500)
 
-
-    webhook = DiscordWebhook(content=f"@here \n\
-        **Your File: **{os.path.basename(__file__)} finish to execute for {value} std \n\
-        **Duration Time:** {timedelta(seconds = time.monotonic()-start_time)} \n\
-        **Processing next value:** :robot: ")
+    webhook = DiscordWebhook(content=f"@here :detective: :chart_with_upwards_trend: \n\
+        **Your File: **{os.path.basename(__file__)} FINISH TO EXECUTE \n\
+        **Overall Duration Time:** {timedelta(seconds = time.monotonic()-start_time)}")
     webhook.execute()
 
 
-df_for_average = dataframe_compiled.groupby(['Euclidean Distance','Std value']).mean().reset_index()
-df_for_average['Accuracy_std'] = dataframe_compiled.groupby(['Euclidean Distance','Std value']).sem(ddof=1).reset_index()['Accuracy']
-df_for_average["Std value selected"] = 'std ='+ df_for_average["Std value"].astype(str)
-
-plot_average = ggplot(df_for_average, aes(x='Euclidean Distance', y='Accuracy')) +\
-    geom_line(aes(color = 'Std value selected')) +\
-    geom_point() +\
-    geom_errorbar(aes(ymin = df_for_average['Accuracy'] - df_for_average['Accuracy_std'] , ymax =  df_for_average['Accuracy'] + df_for_average['Accyracy_std'], color = 'Std value selected'), position = position_dodge(0), width = 0.044) +\
-    ggtitle("Accuracy plot for multiple Euclidean Distance and different std values")
-ggsave(plot_average,path_to_store_figures + f'/Mean_Accuracy_plot_for_multiple_different std {dimension} dim png' , dpi = 500)
-
-webhook = DiscordWebhook(content=f"@here :detective: :chart_with_upwards_trend: \n\
-    **Your File: **{os.path.basename(__file__)} FINISH TO EXECUTE \n\
+webhook = DiscordWebhook(content=f"@here **END OF EXECUTION** \n\
+    **Your File: **{os.path.basename(__file__)} END OF EXECUTION for {dimension_to_test} \n\
     **Overall Duration Time:** {timedelta(seconds = time.monotonic()-start_time)}")
 webhook.execute()

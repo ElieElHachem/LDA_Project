@@ -14,10 +14,6 @@ import time
 import itertools
 from sklearn.datasets import make_blobs
 from scipy.spatial.distance import euclidean
-from numba import jit
-
-@jit
-
  
 def storage_position(patient_frame_to_store,figures_storage,frame_storage, abspath):
     dname = os.path.dirname(abspath)
@@ -502,7 +498,7 @@ def continuous_data_files_concat_kmeans_reattached_V2(path_to_store_frame, numbe
         df_to_generate = pd.read_csv(file, index_col= 0)
         list_of_frame_to_append.append(df_to_generate)
     overall_dataframe = pd.concat(list_of_frame_to_append, ignore_index=False)
-    overall_dataframe = pd.DataFrame(stats.zscore(overall_dataframe, nan_policy= 'omit'))
+    #overall_dataframe = pd.DataFrame(stats.zscore(overall_dataframe))
 
     kmeans = KMeans(n_clusters=number_of_cluster, random_state=41).fit(overall_dataframe)
     labels = kmeans.labels_
@@ -644,7 +640,6 @@ def test_blob(number_of_patient,n_pheno,n_dim,theta,number_of_cell, patient_fram
 def test_blob_left_right_proba(proba,number_of_patient,n_pheno,n_dim,theta,number_of_cell,patient_frame_to_store,value, return_combination):
     splitted_vector = np.round(np.linspace(0, number_of_patient, n_pheno+1)[1:]).astype(int)
     list_of_array_patients = np.split(range(number_of_patient), splitted_vector)[:-1]
- 
     phenotype_comb = []
 
     patient_and_phenotype = {'Patient_Number':[] ,'Phenotype_Number':[],'Patient_combination_phenotype':[] }

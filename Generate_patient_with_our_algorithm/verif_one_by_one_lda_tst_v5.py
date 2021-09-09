@@ -139,13 +139,13 @@ for dim in tqdm(dimension_to_test):
         ggtitle("Accuracy plot for multiple Euclidean Distance and different std values")
     ggsave(plot_average,path_to_store_figures + f'/Mean_Accuracy_plot_for_multiple_different std {dim} dim png' , dpi = 500)
 
-    webhook = DiscordWebhook(url = 'https://discord.com/api/webhooks/872804807050670171/ErNtnHtukjxO4gePB0F5fF7V2EWH_9nQZZdAFsdXUvqx6ZJH3orq8Gt-NOpfI9DAZo2S',content=f"@here :detective: :chart_with_upwards_trend: \n\
+    webhook = DiscordWebhook(content=f"@here :detective: :chart_with_upwards_trend: \n\
         **Your File: **{os.path.basename(__file__)} **FINISH TO EXECUTE** for {dim}, process next dimension \n\
         **Overall Duration Time:** {timedelta(seconds = time.monotonic()-start_time)}")
     webhook.execute()
 
 
-webhook = DiscordWebhook(url = 'https://discord.com/api/webhooks/872804807050670171/ErNtnHtukjxO4gePB0F5fF7V2EWH_9nQZZdAFsdXUvqx6ZJH3orq8Gt-NOpfI9DAZo2S',content=f"@here **END OF EXECUTION** \n\
+webhook = DiscordWebhook(content=f"@here **END OF EXECUTION** \n\
     **Your File: **{os.path.basename(__file__)} END OF EXECUTION for {dimension_to_test} \n\
     **Overall Duration Time:** {timedelta(seconds = time.monotonic()-start_time)}")
 webhook.execute()
